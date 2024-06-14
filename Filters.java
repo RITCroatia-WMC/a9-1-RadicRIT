@@ -1,6 +1,6 @@
 /*
-@ASSESSME.USERID: userID
-@ASSESSME.AUTHOR: author, list of authors
+@ASSESSME.USERID: ar6367
+@ASSESSME.AUTHOR: Andrija Radic
 @ASSESSME.LANGUAGE: JAVA
 @ASSESSME.DESCRIPTION: ASS91
 @ASSESSME.ANALYZE: YES
@@ -11,6 +11,7 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import javafx.application.Application;
 import javafx.scene.Scene;
@@ -19,6 +20,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.GridPane;
 import javafx.stage.Stage;
+
 
 /**
  * Displays data in a table format allowing the user to sort the table by the
@@ -46,37 +48,39 @@ public class Filters extends Application {
         data = new ArrayList<> ();
         lables = new ArrayList<> ();
 
+        try(BufferedReader fin = new BufferedReader(new FileReader(file))){
+            String headerLine = fin.readLine();
+            String[] header = headerLine.strip().split(",");
+            int col = 0;
+        
+
         // Use the header to create the first row as buttons.
         String[] header = fin.readLine ().strip ().split (","); 
         for (String value : header) {
             Button button = new Button (value);
+            int colIndex = col;
+            button.setOnAction(e ->{
+                data.sort((a, b) -> a[colIndex].compareTo(b[colIndex]));
+                update();
+            });
 
-            pane.add (button, col, row);
+            pane.add (button, col, 0);
             col++;
         }
-        row++;
+        
+
+        data = fin.lines().map(line -> line.strip().split(",")).collect(Collectors.toList());
 
         // Use the rest of the data to fill in the labels.
-        String line = fin.readLine (); 
-        while (line != null) {
-            String[] record = line.strip ().split (",");
-            // Store all the data in a list so it can be easily sorted
-            // later on (List.sort)
-            data.add (record);
-            col = 0;
-            lables.add (new ArrayList<>());
-            for (String value : record) {
-                Label label = new Label (value);
-                // Keep track of all the labels so they can be adjusted without
-                // haveing to find them in the Grid which can be a pain.
-                lables.get (row - 1).add (label);
-                pane.add (label, col, row);
-                col++;    
+        for(int row = 1; row <= data.size(); row++){
+            labels.add(new ArrayList<>());
+            for(int c = 0; c<data.get(row-1).length; c++){
+                Label label = new Label(data.get(row - 1)[c]);
+                labels.get(row - 1).add(label);
+                pane.add(label, c, row);
             }
-            row++;
-            line = fin.readLine (); 
         }
-        fin.close ();
+    }
 
         scroller.setContent (pane);
         Scene scene = new Scene (scroller);
